@@ -4,10 +4,14 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [Header ("playerSettings")] 
+    [Header ("BASIC MOVEMENT")] 
     public float speed;
     public float jumpPower;
     public int numExtraJump;
+    [Header("DASH")]
+    public float dashSpeed;
+    public float dashDuration;
+    public float dashCooldown;
 
     Rigidbody2D rb;
     float inputx;
@@ -16,15 +20,22 @@ public class PlayerMovement : MonoBehaviour
     public LayerMask whatIsGround;
     public Transform groundcheck;
     int extraJumpsLeft;
+    bool isDashing;
+    bool canDash;
 
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         extraJumpsLeft = numExtraJump;
+        canDash = true;
     }
 
     private void Update()
     {
+        if (isDashing == true)
+        {
+            return;
+        }
         inputx = Input.GetAxisRaw("Horizontal");
 
         if (facingRight == true && inputx == -1)
@@ -45,6 +56,11 @@ public class PlayerMovement : MonoBehaviour
             extraJumpsLeft = numExtraJump;
         }
 
+        if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
+        {
+            StartCoroutine(Dash());
+        }
+
         if (Input.GetKeyDown(KeyCode.Space))
         {
             if (isGrounded == true)
@@ -57,10 +73,20 @@ public class PlayerMovement : MonoBehaviour
                 extraJumpsLeft--;
             }
         }
-
-
     }
 
+    private IEnumerator Dash()
+    {
+        canDash = false;
+        isDashing = true;
+        rb.velocity = new Vector2(inputx * dashSpeed, rb.velocity.y);
+        yield return new WaitForSeconds(dashDuration);
+        isDashing = false;
+
+        yield return new WaitForSeconds(dashCooldown);
+        canDash = true;
+        
+    }
     private void FixedUpdate()
     {
         rb.velocity = new Vector2(inputx * speed, rb.velocity.y);
